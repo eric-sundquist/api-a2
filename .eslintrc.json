@@ -1,3 +1,4 @@
 {
-    "extends": "@lnu"
+  "extends": "@lnu",
+  "space-before-function-paren": "never"
 }

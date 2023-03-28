@@ -82,4 +82,4 @@ schema.set('toObject', convertOptions)
 schema.set('toJSON', convertOptions)
 
 // Create a model using the schema.
-export const TaskModel = mongoose.model('Catch', schema)
+export const Catch = mongoose.model('Catch', schema)

@@ -58,4 +58,4 @@ schema.statics.validateToken = async function (id) {
 }
 
 // Create a model using the schema.
-export const TaskModel = mongoose.model('Token', schema)
+export const Token = mongoose.model('Token', schema)
