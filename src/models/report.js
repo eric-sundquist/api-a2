@@ -25,7 +25,7 @@ const schema = new mongoose.Schema(
         required: true
       }
     },
-    lakeOrRiver: {
+    locationName: {
       type: String,
       required: true
     },
@@ -49,7 +49,7 @@ const schema = new mongoose.Schema(
       type: String,
       required: false
     },
-    timestamp: {
+    dateOfCatch: {
       type: Date,
       required: true
     }

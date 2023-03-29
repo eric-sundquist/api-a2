@@ -54,7 +54,7 @@ export class ReportsController {
   }
 
   /**
-   * Sends a JSON response containing all report created by the user.
+   * Sends a JSON response containing all reports.
    *
    * @param {object} req - Express request object.
    * @param {object} res - Express response object.
@@ -62,7 +62,7 @@ export class ReportsController {
    */
   async findAll(req, res, next) {
     try {
-      const reports = await Report.find({ ownerUserId: req.user.userId })
+      const reports = await Report.find()
       res.json(reports)
     } catch (error) {
       next(error)
@@ -78,8 +78,9 @@ export class ReportsController {
    */
   async create(req, res, next) {
     try {
-      if (!this.isAllowedContentType(req, res, next)) return
-      if (!req.body.data) {
+      console.log(req.body)
+      console.log(req.user)
+      if (!req.body.report) {
         next(
           createError(
             400,
@@ -89,21 +90,19 @@ export class ReportsController {
         return
       }
 
-      const body = {
-        data: req.body.data,
-        contentType: req.body.contentType
-      }
-
-      const response = await this.fetchPictureApi('POST', 'images', body)
-      const data = await response.json()
-
-      // Save URL and image data in database
-      const image = new Image({
-        imageUrl: data.imageUrl,
-        description: req.body.description,
-        location: req.body.location,
-        _id: data.id,
-        ownerUserId: req.user.userId
+      const report = new Report({
+        user: req.user._id,
+        position: {
+          latitude: req.body.report.latitude,
+          longitude: req.body.report.longitude
+        },
+        locationName: req.body.report.locationName,
+        city: req.body.report.city,
+        fishSpecies: req.body.report.fishSpecies,
+        weight: req.body.report.weight,
+        length: req.body.report.length,
+        imageUrl: req.body.report.imageUrl,
+        dateOfCatch: req.body.report.dateOfCatch
       })
       await image.save()
       res.status(201).json(image)
