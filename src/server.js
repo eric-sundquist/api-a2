@@ -1,25 +1,21 @@
 /**
  * The starting point of the application.
  *
+ * @author Eric Sundqvist
  * @author Mats Loock
- * @version 2.0.0
+ * @version 1.0.0
  */
-
-import { container } from './config/bootstrap.js'
 
 import express from 'express'
 import helmet from 'helmet'
 import logger from 'morgan'
-import createError from 'http-errors'
 import { router } from './routes/router.js'
 import { connectDB } from './config/mongoose.js'
 
 try {
-  await connectDB(container.resolve('ConnectionString'))
+  await connectDB()
 
   const app = express()
-
-  app.set('container', container)
 
   // Set various HTTP headers to make the application little more secure (https://www.npmjs.com/package/helmet).
   app.use(helmet())
@@ -35,19 +31,23 @@ try {
 
   // Error handler.
   app.use(function (err, req, res, next) {
-    if (!err.status) {
-      const cause = err
-      err = createError(500)
-      err.cause = cause
-    }
+    err.status = err.status || 500
 
     if (req.app.get('env') !== 'development') {
-      return res
-        .status(err.status)
-        .json({
-          status: err.status,
-          message: err.message
-        })
+      if (err.status === 409) {
+        return res
+          .status(err.status)
+          .send()
+      } else {
+        if (err.status === 500) err.message = 'An unexpected condition was encountered.'
+        if (err.status === 400) err.message = 'The request cannot or will not be processed due to something that is perceived to be a client error (for example, validation error).'
+        return res
+          .status(err.status)
+          .json({
+            status: err.status,
+            message: err.message
+          })
+      }
     }
 
     // Development only!
@@ -57,7 +57,13 @@ try {
       .json({
         status: err.status,
         message: err.message,
-        cause: err.cause ? JSON.stringify(err.cause, Object.getOwnPropertyNames(err.cause)) : undefined,
+        cause: err.cause
+          ? {
+              status: err.cause.status,
+              message: err.cause.message,
+              stack: err.cause.stack
+            }
+          : null,
         stack: err.stack
       })
   })

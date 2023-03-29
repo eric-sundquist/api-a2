@@ -1,17 +1,27 @@
 /**
- * The routes.
+ * API version 1 routes.
  *
- * @author Mats Loock
- * @version 2.0.0
+ * @author Eric Sundqvist
+ * @version 1.0.0
  */
 
 import express from 'express'
 import createError from 'http-errors'
-import { router as v1Router } from './api/v1/router.js'
+import { AccountController } from '../controllers/api/account-controller.js'
 
 export const router = express.Router()
 
-router.use('/api/v1', v1Router)
+const controller = new AccountController()
 
-// Catch 404 (ALWAYS keep this as the last route).
+router.get('/', (req, res) => res.json({ message: 'Welcome to Picture It - Authorization Service API' }))
+
+// Log in
+router.post('/login', (req, res, next) => controller.login(req, res, next))
+
+// Register
+router.post('/register', (req, res, next) => controller.register(req, res, next))
+
+router.post('/refresh', (req, res, next) => controller.refresh(req, res, next))
+
+// Catch 404.
 router.use('*', (req, res, next) => next(createError(404)))

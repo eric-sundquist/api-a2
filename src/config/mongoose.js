@@ -1,8 +1,9 @@
 /**
  * Mongoose configuration.
  *
+ * @author Eric Sundqvist
  * @author Mats Loock
- * @version 2.0.0
+ * @version 1.0.0
  */
 
 import mongoose from 'mongoose'
@@ -10,10 +11,9 @@ import mongoose from 'mongoose'
 /**
  * Establishes a connection to a database.
  *
- * @param {string} connectionString - The connection used to open the MongoDB database.
  * @returns {Promise} Resolves to this if connection succeeded.
  */
-export const connectDB = async (connectionString) => {
+export const connectDB = async () => {
   const { connection } = mongoose
 
   // Bind connection to events (to get notifications).
@@ -30,5 +30,5 @@ export const connectDB = async (connectionString) => {
   })
 
   // Connect to the server.
-  return mongoose.connect(connectionString)
+  return mongoose.connect(process.env.DB_CONNECTION_STRING)
 }
