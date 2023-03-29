@@ -1,8 +1,7 @@
 /**
- * Module for the AccountController.
+ * Module for the AuthController.
  *
  * @author Eric Sundqvist
- * @author Mats Loock
  * @version 1.0.0
  */
 
@@ -17,7 +16,7 @@ const key = Buffer.from(process.env.ACCESS_TOKEN_PRIVATE_KEY_64, 'base64')
 /**
  * Encapsulates a controller.
  */
-export class AccountController {
+export class AuthController {
   /**
    * Authenticates a user.
    *
@@ -81,9 +80,9 @@ export class AccountController {
     try {
       const user = new User({
         username: req.body.username,
-        password: req.body.password,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
+        password: req.body.password,
         userId: uuidv4()
       })
 

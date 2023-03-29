@@ -7,15 +7,17 @@
 
 import express from 'express'
 import createError from 'http-errors'
-import { router as accountRouter } from './account-router.js'
-// import { router as imagesRouter } from './images-router.js'
+import { router as authRouter } from './auth-router.js'
+import { router as reportsRouter } from './reports-router.js'
 
 export const router = express.Router()
 
 router.get('/', (req, res) =>
   res.json({ message: 'Welcome to Fishing club API' })
 )
-router.use('/account', accountRouter)
+router.use('/auth', authRouter)
+router.use('/reports', reportsRouter)
+
 // router.use('/images', imagesRouter)
 
 // Catch 404.

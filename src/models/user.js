@@ -12,6 +12,19 @@ import mongoose from 'mongoose'
 // Create a schema.
 const schema = new mongoose.Schema(
   {
+    username: {
+      type: String,
+      required: [true, 'Username is required.'],
+      unique: true,
+      // - A valid username should start with an alphabet so, [A-Za-z].
+      // - All other characters can be alphabets, numbers or an underscore so, [A-Za-z0-9_-].
+      // - Since length constraint is 3-256 and we had already fixed the first character, so we give {2, 255}.
+      // - We use ^ and $ to specify the beginning and end of matching.
+      match: [
+        /^[A-Za-z][A-Za-z0-9_-]{2,255}$/,
+        'Please provide a valid username.'
+      ]
+    },
     firstName: {
       type: String,
       required: [true, 'First name is required.'],
@@ -32,40 +45,17 @@ const schema = new mongoose.Schema(
       ],
       trim: true
     },
-    email: {
-      type: String,
-      required: [true, 'Email address is required.'],
-      maxLength: [254, 'The email must be of maximum length 254 characters.'],
-      unique: true,
-      lowercase: true,
-      trim: true
-    },
-    username: {
-      type: String,
-      required: [true, 'Username is required.'],
-      unique: true,
-      // - A valid username should start with an alphabet so, [A-Za-z].
-      // - All other characters can be alphabets, numbers or an underscore so, [A-Za-z0-9_-].
-      // - Since length constraint is 3-256 and we had already fixed the first character, so we give {2, 255}.
-      // - We use ^ and $ to specify the beginning and end of matching.
-      match: [
-        /^[A-Za-z][A-Za-z0-9_-]{2,255}$/,
-        'Please provide a valid username.'
-      ]
-    },
     password: {
       type: String,
-      minLength: [10, 'The password must be of minimum length 10 characters.'],
-      maxLength: [
-        256,
-        'The password must be of maximum length 256 characters.'
-      ],
-      required: [true, 'Password is required.']
+      required: true,
+      minlength: 6
     },
-    userId: {
-      type: String,
-      unique: true
-    }
+    catches: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Catch'
+      }
+    ]
   },
   {
     timestamps: true,

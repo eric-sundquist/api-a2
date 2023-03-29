@@ -1,21 +1,20 @@
 /**
- * API version 1 routes.
+ * Reports router
  *
  * @author Eric Sundqvist
- * @author Mats Loock
  * @version 1.0.0
  */
 
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import createError from 'http-errors'
-import { ImagesController } from '../controllers/api/images-controller.js'
+import { ReportsController } from '../controllers/api/reports-controller.js'
 
 export const router = express.Router()
 
 const publicKey = Buffer.from(process.env.ACCESS_TOKEN_PUBLIC_KEY_64, 'base64')
 
-const controller = new ImagesController()
+const controller = new ReportsController()
 
 // ------------------------------------------------------------------------------
 //  Helpers
@@ -72,7 +71,10 @@ const authenticateJWT = (req, res, next) => {
  */
 const authOwner = (req, res, next) => {
   if (req.user.userId !== req.image.ownerUserId) {
-    const error = createError(403, 'The request contained valid data and was understood by the server, but the server is refusing action due to the authenticated user not having the necessary permissions for the resource.')
+    const error = createError(
+      403,
+      'The request contained valid data and was understood by the server, but the server is refusing action due to the authenticated user not having the necessary permissions for the resource.'
+    )
     next(error)
     return
   }
@@ -84,44 +86,34 @@ const authOwner = (req, res, next) => {
 // ------------------------------------------------------------------------------
 
 // Provide req.image to the route if :id is present in the route path.
-router.param('id', (req, res, next, id) => controller.loadImageData(req, res, next, id))
-
-// GET images
-router.get('/',
-  authenticateJWT,
-  (req, res, next) => controller.findAll(req, res, next)
+router.param('id', (req, res, next, id) =>
+  controller.getReport(req, res, next, id)
 )
 
-// GET images/:id
-router.get('/:id',
-  authenticateJWT,
-  authOwner,
-  (req, res, next) => controller.find(req, res, next)
+// GET reports
+router.get('/', (req, res, next) => controller.findAll(req, res, next))
+
+// GET reports/:id
+router.get('/:id', authenticateJWT, authOwner, (req, res, next) =>
+  controller.find(req, res, next)
 )
 
-// POST images
-router.post('/',
-  authenticateJWT,
-  (req, res, next) => controller.create(req, res, next)
+// POST reports
+router.post('/', authenticateJWT, (req, res, next) =>
+  controller.create(req, res, next)
 )
 
-// PUT images/:id
-router.put('/:id',
-  authenticateJWT,
-  authOwner,
-  (req, res, next) => controller.updatePut(req, res, next)
+// PUT reports/:id
+router.put('/:id', authenticateJWT, authOwner, (req, res, next) =>
+  controller.updatePut(req, res, next)
 )
 
-// PATCH images/:id
-router.patch('/:id',
-  authenticateJWT,
-  authOwner,
-  (req, res, next) => controller.updatePatch(req, res, next)
+// PATCH reports/:id
+router.patch('/:id', authenticateJWT, authOwner, (req, res, next) =>
+  controller.updatePatch(req, res, next)
 )
 
-// DELETE images/:id
-router.delete('/:id',
-  authenticateJWT,
-  authOwner,
-  (req, res, next) => controller.delete(req, res, next)
+// DELETE reports/:id
+router.delete('/:id', authenticateJWT, authOwner, (req, res, next) =>
+  controller.delete(req, res, next)
 )

@@ -7,11 +7,11 @@
 
 import express from 'express'
 import createError from 'http-errors'
-import { AccountController } from '../controllers/api/account-controller.js'
+import { AuthController } from '../controllers/api/auth-controller.js'
 
 export const router = express.Router()
 
-const controller = new AccountController()
+const controller = new AuthController()
 
 router.get('/', (req, res) => res.json({ message: 'TODO: WHAT HERE???' }))
 
