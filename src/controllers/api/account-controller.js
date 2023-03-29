@@ -25,7 +25,7 @@ export class AccountController {
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async login (req, res, next) {
+  async login(req, res, next) {
     try {
       const user = await User.authenticate(req.body.username, req.body.password)
 
@@ -43,17 +43,19 @@ export class AccountController {
         sub: token.id,
         user: user.userId
       }
-      const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET, {
-        algorithm: 'HS256',
-        expiresIn: process.env.REFRESH_TOKEN_LIFE
-      })
+      const refreshToken = jwt.sign(
+        refreshTokenPayload,
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+          algorithm: 'HS256',
+          expiresIn: process.env.REFRESH_TOKEN_LIFE
+        }
+      )
 
-      res
-        .status(200)
-        .json({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        })
+      res.status(200).json({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      })
     } catch (error) {
       let err
 
@@ -75,21 +77,18 @@ export class AccountController {
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async register (req, res, next) {
+  async register(req, res, next) {
     try {
       const user = new User({
         username: req.body.username,
         password: req.body.password,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
-        email: req.body.email,
         userId: uuidv4()
       })
 
       await user.save()
-      res
-        .status(201)
-        .send()
+      res.status(201).send()
     } catch (error) {
       let err = error
 
@@ -99,7 +98,10 @@ export class AccountController {
         err.cause = error
       } else if (error.name === 'ValidationError') {
         // Validation error(s).
-        err = createError(400, 'The request cannot or will not be processed due to something that is perceived to be a client error (for example validation error)')
+        err = createError(
+          400,
+          'The request cannot or will not be processed due to something that is perceived to be a client error (for example validation error)'
+        )
         err.cause = error
       } else {
         err = createError(500, 'An unexpected condition was encountered.')
@@ -116,13 +118,15 @@ export class AccountController {
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async refresh (req, res, next) {
+  async refresh(req, res, next) {
     try {
-      if (!req.headers.authorization) throw new Error('No authorization header.')
+      if (!req.headers.authorization)
+        throw new Error('No authorization header.')
 
       const [authenticationScheme, token] = req.headers.authorization.split(' ')
 
-      if (authenticationScheme !== 'Bearer') throw new Error('Invalid authentication scheme.')
+      if (authenticationScheme !== 'Bearer')
+        throw new Error('Invalid authentication scheme.')
 
       const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
       await Token.validateToken(payload.sub)
@@ -131,15 +135,19 @@ export class AccountController {
       // Generate new accesstoken
       const accessToken = this.generateAccessToken(user)
 
-      res
-        .status(200)
-        .json({
-          access_token: accessToken,
-          refresh_token: token
-        })
+      res.status(200).json({
+        access_token: accessToken,
+        refresh_token: token
+      })
     } catch (error) {
       let err
-      if (error.message === 'Token has been disabled.' || error.message === 'Invalid authentication scheme.' || error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError' || error.message === 'No authorization header.') {
+      if (
+        error.message === 'Token has been disabled.' ||
+        error.message === 'Invalid authentication scheme.' ||
+        error.name === 'TokenExpiredError' ||
+        error.name === 'JsonWebTokenError' ||
+        error.message === 'No authorization header.'
+      ) {
         err = createError(401, 'Refresh token invalid or not provided.')
         err.cause = error
       } else {
@@ -156,7 +164,7 @@ export class AccountController {
    * @param {object} user - User object.
    * @returns {string} JWT base64 string.
    */
-  generateAccessToken (user) {
+  generateAccessToken(user) {
     const payload = {
       sub: user.userId,
       preferred_username: user.username,

@@ -7,21 +7,16 @@
 
 import express from 'express'
 import createError from 'http-errors'
-import { AccountController } from '../controllers/api/account-controller.js'
+import { router as accountRouter } from './account-router.js'
+// import { router as imagesRouter } from './images-router.js'
 
 export const router = express.Router()
 
-const controller = new AccountController()
-
-router.get('/', (req, res) => res.json({ message: 'Welcome to Picture It - Authorization Service API' }))
-
-// Log in
-router.post('/login', (req, res, next) => controller.login(req, res, next))
-
-// Register
-router.post('/register', (req, res, next) => controller.register(req, res, next))
-
-router.post('/refresh', (req, res, next) => controller.refresh(req, res, next))
+router.get('/', (req, res) =>
+  res.json({ message: 'Welcome to Fishing club API' })
+)
+router.use('/account', accountRouter)
+// router.use('/images', imagesRouter)
 
 // Catch 404.
 router.use('*', (req, res, next) => next(createError(404)))
