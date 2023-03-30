@@ -42,18 +42,19 @@ export class AuthController {
         sub: token.id,
         user: user.userId
       }
-      const refreshToken = jwt.sign(
-        refreshTokenPayload,
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-          algorithm: 'HS256',
-          expiresIn: process.env.REFRESH_TOKEN_LIFE
-        }
-      )
+      const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET, {
+        algorithm: 'HS256',
+        expiresIn: process.env.REFRESH_TOKEN_LIFE
+      })
 
       res.status(200).json({
         access_token: accessToken,
-        refresh_token: refreshToken
+        refresh_token: refreshToken,
+        _links: {
+          self: { href: `${process.env.BASEURL}/auth/login`, method: 'POST' },
+          refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' },
+          reports: { href: `${process.env.BASEURL}/reports/`, method: 'GET' }
+        }
       })
     } catch (error) {
       let err
@@ -87,7 +88,13 @@ export class AuthController {
       })
 
       await user.save()
-      res.status(201).send()
+      res.status(201).json({
+        _links: {
+          self: { href: `${process.env.BASEURL}/auth/register`, method: 'POST' },
+          login: { href: `${process.env.BASEURL}/login/`, method: 'POST' },
+          refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' }
+        }
+      })
     } catch (error) {
       let err = error
 
@@ -119,13 +126,11 @@ export class AuthController {
    */
   async refresh(req, res, next) {
     try {
-      if (!req.headers.authorization)
-        throw new Error('No authorization header.')
+      if (!req.headers.authorization) throw new Error('No authorization header.')
 
       const [authenticationScheme, token] = req.headers.authorization.split(' ')
 
-      if (authenticationScheme !== 'Bearer')
-        throw new Error('Invalid authentication scheme.')
+      if (authenticationScheme !== 'Bearer') throw new Error('Invalid authentication scheme.')
 
       const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
       await Token.validateToken(payload.sub)
@@ -136,7 +141,12 @@ export class AuthController {
 
       res.status(200).json({
         access_token: accessToken,
-        refresh_token: token
+        refresh_token: token,
+        _links: {
+          self: { href: `${process.env.BASEURL}/auth/login`, method: 'POST' },
+          refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' },
+          reports: { href: `${process.env.BASEURL}/reports/`, method: 'GET' }
+        }
       })
     } catch (error) {
       let err

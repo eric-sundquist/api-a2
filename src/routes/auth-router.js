@@ -13,15 +13,24 @@ export const router = express.Router()
 
 const controller = new AuthController()
 
-router.get('/', (req, res) => res.json({ message: 'TODO: WHAT HERE???' }))
+router.get('/', (req, res) => {
+  const data = {
+    message: 'Endpoint for authentication',
+    _links: {
+      self: { href: `${process.env.BASEURL}/auth`, method: 'GET' },
+      login: { href: `${process.env.BASEURL}/auth/login`, method: 'POST' },
+      register: { href: `${process.env.BASEURL}/auth/register`, method: 'POST' },
+      refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' }
+    }
+  }
+  res.json(data)
+})
 
 // Log in
 router.post('/login', (req, res, next) => controller.login(req, res, next))
 
 // Register
-router.post('/register', (req, res, next) =>
-  controller.register(req, res, next)
-)
+router.post('/register', (req, res, next) => controller.register(req, res, next))
 
 router.post('/refresh', (req, res, next) => controller.refresh(req, res, next))
 

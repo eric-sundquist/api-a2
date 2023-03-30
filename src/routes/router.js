@@ -12,9 +12,17 @@ import { router as reportsRouter } from './reports-router.js'
 
 export const router = express.Router()
 
-router.get('/', (req, res) =>
-  res.json({ message: 'Welcome to Fishing club API' })
-)
+router.get('/', (req, res) => {
+  const data = {
+    message: 'Welcome to Fishing club API',
+    _links: {
+      self: { href: `${process.env.BASEURL}`, method: 'GET' },
+      auth: { href: `${process.env.BASEURL}/auth`, method: 'GET' },
+      reports: { href: `${process.env.BASEURL}/reports`, method: 'GET' }
+    }
+  }
+  res.json(data)
+})
 router.use('/auth', authRouter)
 router.use('/reports', reportsRouter)
 

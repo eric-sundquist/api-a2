@@ -50,7 +50,9 @@ export class ReportsController {
    */
   async findReport(req, res, next) {
     const rep = await req.report.populate('user')
-    res.json(this.#getCleanFormattedReportObject(rep))
+    const repObj = rep.toObject()
+    repObj._links = this.#createReportHateoasLinks(rep)
+    res.json(repObj)
   }
 
   /**
@@ -106,7 +108,10 @@ export class ReportsController {
       await report.save()
       await report.populate('user')
 
-      res.status(201).json(this.#getCleanFormattedReportObject(report))
+      const repObj = report.toObject()
+      repObj._links = this.#createReportHateoasLinks(report)
+
+      res.status(201).json(repObj)
     } catch (error) {
       const err = createError(
         error.name === 'ValidationError'
@@ -232,34 +237,34 @@ export class ReportsController {
     }
   }
 
-  #getCleanFormattedReportObject(report) {
-    console.log(report)
-    const {
-      user: { username, firstName, lastName },
-      position,
-      locationName,
-      city,
-      fishSpecies,
-      weight,
-      length,
-      imageUrl,
-      dateOfCatch,
-      id
-    } = report
+  // #getCleanFormattedReportObject(report) {
+  //   console.log(report)
+  //   const {
+  //     user: { username, firstName, lastName },
+  //     position,
+  //     locationName,
+  //     city,
+  //     fishSpecies,
+  //     weight,
+  //     length,
+  //     imageUrl,
+  //     dateOfCatch,
+  //     id
+  //   } = report
 
-    return {
-      username,
-      firstName,
-      lastName,
-      position,
-      locationName,
-      city,
-      fishSpecies,
-      weight,
-      length,
-      imageUrl,
-      dateOfCatch,
-      id
-    }
-  }
+  //   return {
+  //     username,
+  //     firstName,
+  //     lastName,
+  //     position,
+  //     locationName,
+  //     city,
+  //     fishSpecies,
+  //     weight,
+  //     length,
+  //     imageUrl,
+  //     dateOfCatch,
+  //     id
+  //   }
+  // }
 }
