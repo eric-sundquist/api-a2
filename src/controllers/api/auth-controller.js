@@ -27,7 +27,7 @@ export class AuthController {
   async login(req, res, next) {
     try {
       const user = await User.authenticate(req.body.username, req.body.password)
-
+      console.log(user)
       // Create the access token.
       const accessToken = this.generateAccessToken(user)
 
@@ -165,11 +165,10 @@ export class AuthController {
    */
   generateAccessToken(user) {
     const payload = {
-      sub: user.userId,
+      sub: user.id,
       preferred_username: user.username,
       given_name: user.firstName,
-      family_name: user.lastName,
-      email: user.email
+      family_name: user.lastName
     }
     return jwt.sign(payload, key, {
       algorithm: 'RS256',

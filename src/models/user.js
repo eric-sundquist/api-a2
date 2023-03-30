@@ -49,13 +49,13 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6
-    },
-    catches: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Catch'
-      }
-    ]
+    }
+    // catches: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: 'Catch'
+    //   }
+    // ]
   },
   {
     timestamps: true,

@@ -63,6 +63,8 @@ export class ReportsController {
   async findAll(req, res, next) {
     try {
       const reports = await Report.find()
+      for (const report of reports) {
+      }
       res.json(reports)
     } catch (error) {
       next(error)
@@ -89,12 +91,12 @@ export class ReportsController {
         )
         return
       }
-
+      // get user _id
       const report = new Report({
-        user: req.user._id,
+        user: req.user.id,
         position: {
-          latitude: req.body.report.latitude,
-          longitude: req.body.report.longitude
+          latitude: req.body.report.position.latitude,
+          longitude: req.body.report.position.longitude
         },
         locationName: req.body.report.locationName,
         city: req.body.report.city,
@@ -104,10 +106,40 @@ export class ReportsController {
         imageUrl: req.body.report.imageUrl,
         dateOfCatch: req.body.report.dateOfCatch
       })
-      await image.save()
-      res.status(201).json(image)
+      await report.save()
+      await report.populate('user')
+
+      res.status(201).json(getCleanFormattedReportObject(report))
     } catch (error) {
       next(error)
+    }
+  }
+
+  getCleanFormattedReportObject(report) {
+    const {
+      user: { username, firstName, lastName },
+      position,
+      locationName,
+      city,
+      fishSpecies,
+      weight,
+      length,
+      imageUrl,
+      dateOfCatch
+    } = report
+
+    return {
+      username,
+      firstName,
+      lastName,
+      position,
+      locationName,
+      city,
+      fishSpecies,
+      weight,
+      length,
+      imageUrl,
+      dateOfCatch
     }
   }
 

@@ -44,8 +44,7 @@ const authenticateJWT = (req, res, next) => {
       username: payload.preferred_username,
       firstName: payload.given_name,
       lastName: payload.family_name,
-      email: payload.email,
-      userId: payload.sub
+      id: payload.sub
     }
     next()
   } catch (err) {
@@ -70,7 +69,7 @@ const authenticateJWT = (req, res, next) => {
  * @param {Function} next - Express next middleware function.
  */
 const authOwner = (req, res, next) => {
-  if (req.user.userId !== req.image.ownerUserId) {
+  if (req.user.userId !== req.report.ownerUserId) {
     const error = createError(
       403,
       'The request contained valid data and was understood by the server, but the server is refusing action due to the authenticated user not having the necessary permissions for the resource.'
