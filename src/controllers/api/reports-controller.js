@@ -6,7 +6,6 @@
  */
 
 import createError from 'http-errors'
-import fetch from 'node-fetch'
 import { Report } from '../../models/report.js'
 
 /**
@@ -68,11 +67,7 @@ export class ReportsController {
         populReports.push(report.populate('user'))
       }
       const resolvedReports = await Promise.all(populReports)
-      res.json(
-        resolvedReports.map((report) =>
-          this.getCleanFormattedReportObject(report)
-        )
-      )
+      res.json(resolvedReports.map((report) => this.getCleanFormattedReportObject(report)))
     } catch (error) {
       next(error)
     }
@@ -87,67 +82,33 @@ export class ReportsController {
    */
   async create(req, res, next) {
     try {
-      if (!req.body.report) {
-        next(
-          createError(
-            400,
-            'The request cannot or will not be processed due to something that is perceived to be a client error (for example, validation error).'
-          )
-        )
-        return
-      }
-
       const report = new Report({
         user: req.user.id,
         position: {
-          latitude: req.body.report.position.latitude,
-          longitude: req.body.report.position.longitude
+          latitude: req.body.position.latitude,
+          longitude: req.body.position.longitude
         },
-        locationName: req.body.report.locationName,
-        city: req.body.report.city,
-        fishSpecies: req.body.report.fishSpecies,
-        weight: req.body.report.weight,
-        length: req.body.report.length,
-        imageUrl: req.body.report.imageUrl,
-        dateOfCatch: req.body.report.dateOfCatch
+        locationName: req.body.locationName,
+        city: req.body.city,
+        fishSpecies: req.body.fishSpecies,
+        weight: req.body.weight,
+        length: req.body.length,
+        imageUrl: req.body.imageUrl,
+        dateOfCatch: req.body.dateOfCatch
       })
       await report.save()
       await report.populate('user')
 
       res.status(201).json(this.getCleanFormattedReportObject(report))
     } catch (error) {
-      next(error)
-    }
-  }
+      const err = createError(
+        error.name === 'ValidationError'
+          ? 400 // bad format
+          : 500 // something went really wrong
+      )
+      err.cause = error
 
-  getCleanFormattedReportObject(report) {
-    console.log(report)
-    const {
-      user: { username, firstName, lastName },
-      position,
-      locationName,
-      city,
-      fishSpecies,
-      weight,
-      length,
-      imageUrl,
-      dateOfCatch,
-      id
-    } = report
-
-    return {
-      username,
-      firstName,
-      lastName,
-      position,
-      locationName,
-      city,
-      fishSpecies,
-      weight,
-      length,
-      imageUrl,
-      dateOfCatch,
-      id
+      next(err)
     }
   }
 
@@ -185,39 +146,46 @@ export class ReportsController {
 
       res.status(204).end()
     } catch (error) {
-      next(error)
+      const err = createError(
+        error.name === 'ValidationError'
+          ? 400 // bad format
+          : 500 // something went really wrong
+      )
+      err.cause = error
+      next(err)
     }
   }
 
   /**
-   * Updates some of a specific image resource called with PATCH http method.
+   * Partially updates a specific report.
    *
    * @param {object} req - Express request object.
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async updatePatch(req, res, next) {
+  async updateReport(req, res, next) {
     try {
-      for (const property of Object.keys(req.body)) {
-        if (property === 'description' || property === 'location') {
-          req.image[property] = req.body[property]
-        } else if (property === 'data') {
-          await this.fetchPictureApi('PATCH', `images/${req.params.id}`, {
-            data: req.body.data
-          })
-        } else if (property === 'contentType') {
-          this.isAllowedContentType(req, res, next)
-          await this.fetchPictureApi('PATCH', `images/${req.params.id}`, {
-            contentType: req.body.contentType
-          })
-        }
-      }
+      const partialReport = {}
+      if ('position' in req.body) partialReport.position = req.body.position
+      if ('locationName' in req.body) partialReport.locationName = req.body.locationName
+      if ('city' in req.body) partialReport.city = req.body.city
+      if ('fishSpecies' in req.body) partialReport.fishSpecies = req.body.fishSpecies
+      if ('weight' in req.body) partialReport.weight = req.body.weight
+      if ('length' in req.body) partialReport.length = req.body.length
+      if ('imageUrl' in req.body) partialReport.imageUrl = req.body.imageUrl
+      if ('dateOfCatch' in req.body) partialReport.dateOfCatch = req.body.dateOfCatch
 
-      await req.image.save()
-
+      const newRep = await Report.findByIdAndUpdate(req.params.id, partialReport, { new: true })
       res.status(204).end()
     } catch (error) {
-      next(error)
+      const err = createError(
+        error.name === 'ValidationError'
+          ? 400 // bad format
+          : 500 // something went really wrong
+      )
+      err.cause = error
+
+      next(err)
     }
   }
 
@@ -238,31 +206,33 @@ export class ReportsController {
     }
   }
 
-  /**
-   * Send http request to Picture it api.
-   *
-   * @param {string} method  - which http method to use.
-   * @param {string} route - set url route.
-   * @param {object} body - body to send as json.
-   */
-  async fetchPictureApi(method, route, body) {
-    const response = await fetch(
-      `https://courselab.lnu.se/picture-it/images/api/v1/${route}`,
-      {
-        method: method,
-        body: JSON.stringify(body),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Private-Token': process.env.PICTURE_IT_ACCESS_TOKEN
-        }
-      }
-    )
-    if (!response.ok) {
-      throw new Error(
-        `${response.status} - ${response.statusText} - Fetch from Picture-It API failed`
-      )
-    }
+  getCleanFormattedReportObject(report) {
+    const {
+      user: { username, firstName, lastName },
+      position,
+      locationName,
+      city,
+      fishSpecies,
+      weight,
+      length,
+      imageUrl,
+      dateOfCatch,
+      id
+    } = report
 
-    return response
+    return {
+      username,
+      firstName,
+      lastName,
+      position,
+      locationName,
+      city,
+      fishSpecies,
+      weight,
+      length,
+      imageUrl,
+      dateOfCatch,
+      id
+    }
   }
 }

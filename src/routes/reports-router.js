@@ -85,34 +85,22 @@ const authOwner = (req, res, next) => {
 // ------------------------------------------------------------------------------
 
 // Provide req.image to the route if :id is present in the route path.
-router.param('id', (req, res, next, id) =>
-  controller.getReport(req, res, next, id)
-)
+router.param('id', (req, res, next, id) => controller.getReport(req, res, next, id))
 
 // GET reports
 router.get('/', (req, res, next) => controller.findAll(req, res, next))
 
 // GET reports/:id
-router.get('/:id', authenticateJWT, (req, res, next) =>
-  controller.find(req, res, next)
-)
+router.get('/:id', authenticateJWT, (req, res, next) => controller.find(req, res, next))
 
 // POST reports
-router.post('/', authenticateJWT, (req, res, next) =>
-  controller.create(req, res, next)
-)
+router.post('/', authenticateJWT, (req, res, next) => controller.create(req, res, next))
 
 // PUT reports/:id
-router.put('/:id', authenticateJWT, authOwner, (req, res, next) =>
-  controller.updatePut(req, res, next)
-)
+router.put('/:id', authenticateJWT, authOwner, (req, res, next) => controller.updatePut(req, res, next))
 
 // PATCH reports/:id
-router.patch('/:id', authenticateJWT, authOwner, (req, res, next) =>
-  controller.updatePatch(req, res, next)
-)
+router.patch('/:id', authenticateJWT, authOwner, (req, res, next) => controller.updateReport(req, res, next))
 
 // DELETE reports/:id
-router.delete('/:id', authenticateJWT, authOwner, (req, res, next) =>
-  controller.delete(req, res, next)
-)
+router.delete('/:id', authenticateJWT, authOwner, (req, res, next) => controller.delete(req, res, next))
