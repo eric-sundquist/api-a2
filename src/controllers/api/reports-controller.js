@@ -50,8 +50,7 @@ export class ReportsController {
    */
   async findReport(req, res, next) {
     const rep = await req.report.populate('user')
-    console.log(rep)
-    res.json(this.getCleanFormattedReportObject(rep))
+    res.json(this.#getCleanFormattedReportObject(rep))
   }
 
   /**
@@ -63,14 +62,19 @@ export class ReportsController {
    */
   async findAll(req, res, next) {
     try {
-      const reports = await Report.find()
-      const populReports = []
+      const reports = await Report.find().populate('user')
+      const resolvedReports = []
+
       for (const report of reports) {
-        populReports.push(report.populate('user'))
+        const reportWithLinks = report.toObject()
+
+        // Add HATEOAS links to the report
+        reportWithLinks._links = this.#createReportHateoasLinks(report)
+
+        resolvedReports.push(reportWithLinks)
       }
-      const resolvedReports = await Promise.all(populReports)
-      console.log(resolvedReports)
-      res.json(resolvedReports.map((report) => this.getCleanFormattedReportObject(report)))
+
+      res.json(resolvedReports)
     } catch (error) {
       next(error)
     }
@@ -102,7 +106,7 @@ export class ReportsController {
       await report.save()
       await report.populate('user')
 
-      res.status(201).json(this.getCleanFormattedReportObject(report))
+      res.status(201).json(this.#getCleanFormattedReportObject(report))
     } catch (error) {
       const err = createError(
         error.name === 'ValidationError'
@@ -198,7 +202,37 @@ export class ReportsController {
     }
   }
 
-  getCleanFormattedReportObject(report) {
+  #createReportHateoasLinks(report) {
+    const baseUrl = process.env.BASEURL
+    return {
+      self: {
+        href: `${baseUrl}/reports/${report.id}`,
+        method: 'GET'
+      },
+      all: {
+        href: `${baseUrl}/reports`,
+        method: 'GET'
+      },
+      create: {
+        href: `${baseUrl}/reports`,
+        method: 'POST'
+      },
+      update: {
+        href: `${baseUrl}/reports/${report.id}`,
+        method: 'PATCH'
+      },
+      replace: {
+        href: `${baseUrl}/reports/${report.id}`,
+        method: 'PUT'
+      },
+      delete: {
+        href: `${baseUrl}/reports/${report.id}`,
+        method: 'DELETE'
+      }
+    }
+  }
+
+  #getCleanFormattedReportObject(report) {
     console.log(report)
     const {
       user: { username, firstName, lastName },
