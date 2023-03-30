@@ -63,9 +63,16 @@ export class ReportsController {
   async findAll(req, res, next) {
     try {
       const reports = await Report.find()
+      const populReports = []
       for (const report of reports) {
+        populReports.push(report.populate('user'))
       }
-      res.json(reports)
+      const resolvedReports = await Promise.all(populReports)
+      res.json(
+        resolvedReports.map((report) =>
+          this.getCleanFormattedReportObject(report)
+        )
+      )
     } catch (error) {
       next(error)
     }
@@ -80,8 +87,6 @@ export class ReportsController {
    */
   async create(req, res, next) {
     try {
-      console.log(req.body)
-      console.log(req.user)
       if (!req.body.report) {
         next(
           createError(
@@ -91,7 +96,7 @@ export class ReportsController {
         )
         return
       }
-      // get user _id
+
       const report = new Report({
         user: req.user.id,
         position: {
@@ -109,13 +114,14 @@ export class ReportsController {
       await report.save()
       await report.populate('user')
 
-      res.status(201).json(getCleanFormattedReportObject(report))
+      res.status(201).json(this.getCleanFormattedReportObject(report))
     } catch (error) {
       next(error)
     }
   }
 
   getCleanFormattedReportObject(report) {
+    console.log(report)
     const {
       user: { username, firstName, lastName },
       position,
@@ -125,7 +131,8 @@ export class ReportsController {
       weight,
       length,
       imageUrl,
-      dateOfCatch
+      dateOfCatch,
+      id
     } = report
 
     return {
@@ -139,7 +146,8 @@ export class ReportsController {
       weight,
       length,
       imageUrl,
-      dateOfCatch
+      dateOfCatch,
+      id
     }
   }
 
@@ -222,8 +230,7 @@ export class ReportsController {
    */
   async delete(req, res, next) {
     try {
-      await this.fetchPictureApi('DELETE', `images/${req.params.id}`)
-      await req.image.deleteOne()
+      await req.report.deleteOne()
 
       res.status(204).end()
     } catch (error) {

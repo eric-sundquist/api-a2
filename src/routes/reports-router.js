@@ -69,7 +69,7 @@ const authenticateJWT = (req, res, next) => {
  * @param {Function} next - Express next middleware function.
  */
 const authOwner = (req, res, next) => {
-  if (req.user.userId !== req.report.ownerUserId) {
+  if (req.user.id !== req.report.user.toHexString()) {
     const error = createError(
       403,
       'The request contained valid data and was understood by the server, but the server is refusing action due to the authenticated user not having the necessary permissions for the resource.'
@@ -93,7 +93,7 @@ router.param('id', (req, res, next, id) =>
 router.get('/', (req, res, next) => controller.findAll(req, res, next))
 
 // GET reports/:id
-router.get('/:id', authenticateJWT, authOwner, (req, res, next) =>
+router.get('/:id', authenticateJWT, (req, res, next) =>
   controller.find(req, res, next)
 )
 
