@@ -48,8 +48,10 @@ export class ReportsController {
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async find(req, res, next) {
-    res.json(req.report)
+  async findReport(req, res, next) {
+    const rep = await req.report.populate('user')
+    console.log(rep)
+    res.json(this.getCleanFormattedReportObject(rep))
   }
 
   /**
@@ -67,6 +69,7 @@ export class ReportsController {
         populReports.push(report.populate('user'))
       }
       const resolvedReports = await Promise.all(populReports)
+      console.log(resolvedReports)
       res.json(resolvedReports.map((report) => this.getCleanFormattedReportObject(report)))
     } catch (error) {
       next(error)
@@ -80,7 +83,7 @@ export class ReportsController {
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async create(req, res, next) {
+  async createReport(req, res, next) {
     try {
       const report = new Report({
         user: req.user.id,
@@ -119,30 +122,19 @@ export class ReportsController {
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async updatePut(req, res, next) {
+  async replaceReport(req, res, next) {
     try {
-      if (!this.isAllowedContentType(req, res, next)) return
-      if (!req.body.data) {
-        next(
-          createError(
-            400,
-            'The request cannot or will not be processed due to something that is perceived to be a client error (for example, validation error).'
-          )
-        )
-        return
-      }
+      const { position, locationName, city, fishSpecies, weight, length, imageUrl, dateOfCatch } = req.body
+      const user = req.report.user.toHexString()
 
-      const body = {
-        data: req.body.data,
-        contentType: req.body.contentType
-      }
-
-      await this.fetchPictureApi('PUT', `images/${req.params.id}`, body)
-
-      req.image.description = req.body.description
-      req.image.location = req.body.location
-
-      await req.image.save()
+      await Report.findOneAndReplace(
+        { _id: req.params.id },
+        { user, position, locationName, city, fishSpecies, weight, length, imageUrl, dateOfCatch },
+        {
+          new: true,
+          runValidators: true
+        }
+      )
 
       res.status(204).end()
     } catch (error) {
@@ -175,7 +167,7 @@ export class ReportsController {
       if ('imageUrl' in req.body) partialReport.imageUrl = req.body.imageUrl
       if ('dateOfCatch' in req.body) partialReport.dateOfCatch = req.body.dateOfCatch
 
-      const newRep = await Report.findByIdAndUpdate(req.params.id, partialReport, { new: true })
+      await Report.findByIdAndUpdate(req.params.id, partialReport, { new: true })
       res.status(204).end()
     } catch (error) {
       const err = createError(
@@ -196,7 +188,7 @@ export class ReportsController {
    * @param {object} res - Express response object.
    * @param {Function} next - Express next middleware function.
    */
-  async delete(req, res, next) {
+  async deleteReport(req, res, next) {
     try {
       await req.report.deleteOne()
 
@@ -207,6 +199,7 @@ export class ReportsController {
   }
 
   getCleanFormattedReportObject(report) {
+    console.log(report)
     const {
       user: { username, firstName, lastName },
       position,

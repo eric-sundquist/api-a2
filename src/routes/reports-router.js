@@ -69,6 +69,7 @@ const authenticateJWT = (req, res, next) => {
  * @param {Function} next - Express next middleware function.
  */
 const authOwner = (req, res, next) => {
+  console.log(req.report)
   if (req.user.id !== req.report.user.toHexString()) {
     const error = createError(
       403,
@@ -91,16 +92,16 @@ router.param('id', (req, res, next, id) => controller.getReport(req, res, next, 
 router.get('/', (req, res, next) => controller.findAll(req, res, next))
 
 // GET reports/:id
-router.get('/:id', authenticateJWT, (req, res, next) => controller.find(req, res, next))
+router.get('/:id', authenticateJWT, (req, res, next) => controller.findReport(req, res, next))
 
 // POST reports
-router.post('/', authenticateJWT, (req, res, next) => controller.create(req, res, next))
+router.post('/', authenticateJWT, (req, res, next) => controller.createReport(req, res, next))
 
 // PUT reports/:id
-router.put('/:id', authenticateJWT, authOwner, (req, res, next) => controller.updatePut(req, res, next))
+router.put('/:id', authenticateJWT, authOwner, (req, res, next) => controller.replaceReport(req, res, next))
 
 // PATCH reports/:id
 router.patch('/:id', authenticateJWT, authOwner, (req, res, next) => controller.updateReport(req, res, next))
 
 // DELETE reports/:id
-router.delete('/:id', authenticateJWT, authOwner, (req, res, next) => controller.delete(req, res, next))
+router.delete('/:id', authenticateJWT, authOwner, (req, res, next) => controller.deleteReport(req, res, next))
