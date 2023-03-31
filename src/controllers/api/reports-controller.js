@@ -52,7 +52,7 @@ export class ReportsController {
   async findReport(req, res, next) {
     const rep = await req.report.populate('user')
     const repObj = rep.toObject()
-    repObj._links = this.#createReportHateoasLinks(rep)
+    repObj._links = this.#createReportHateoasLinks(rep, req.user.id === rep.user.id)
     res.json(repObj)
   }
 
@@ -72,7 +72,7 @@ export class ReportsController {
         const reportWithLinks = report.toObject()
 
         // Add HATEOAS links to the report
-        reportWithLinks._links = this.#createReportHateoasLinks(report)
+        reportWithLinks._links = this.#createReportHateoasLinks(report, req.user.id === report.user.id)
 
         resolvedReports.push(reportWithLinks)
       }
@@ -111,7 +111,7 @@ export class ReportsController {
 
       const repObj = report.toObject()
       this.#triggerWebhook(req, res, next, repObj)
-      repObj._links = this.#createReportHateoasLinks(report)
+      repObj._links = this.#createReportHateoasLinks(report, true)
 
       res.status(201).json(repObj)
     } catch (error) {
@@ -250,28 +250,7 @@ export class ReportsController {
       const webhooks = await Webhook.find()
       webhooks.forEach((webhook) => {
         // add relevant links to data.
-
-        // if user is owner
-        if (report.user.id === webhook.userId) {
-          // Add links for owner like UPDATE, DELETE etc.
-          report._links = this.#createReportHateoasLinks(report)
-        } else {
-          // Add links for non owner
-          report._links = {
-            self: {
-              href: `${process.env.BASEURL}/reports/${report.id}`,
-              method: 'GET'
-            },
-            all: {
-              href: `${process.env.BASEURL}/reports`,
-              method: 'GET'
-            },
-            create: {
-              href: `${process.env.BASEURL}/reports`,
-              method: 'POST'
-            }
-          }
-        }
+        report._links = this.#createReportHateoasLinks(report, report.user.id === webhook.userId)
 
         fetch(webhook.url, {
           method: 'POST',
@@ -290,11 +269,12 @@ export class ReportsController {
    * Returns js object with hateoas links.
    *
    * @param {object} report - report object
+   * @param {boolean} isOwner - true if links for owner be displayed
    * @returns {object} hateoas links
    */
-  #createReportHateoasLinks(report) {
+  #createReportHateoasLinks(report, isOwner) {
     const baseUrl = process.env.BASEURL
-    return {
+    const generalLinks = {
       self: {
         href: `${baseUrl}/reports/${report.id}`,
         method: 'GET'
@@ -307,6 +287,13 @@ export class ReportsController {
         href: `${baseUrl}/reports`,
         method: 'POST'
       },
+      subscribeWebhookUpdatesAllNewReports: {
+        href: `${baseUrl}/reports/webhooks`,
+        method: 'POST'
+      }
+    }
+
+    const ownerLinks = {
       update: {
         href: `${baseUrl}/reports/${report.id}`,
         method: 'PATCH'
@@ -320,6 +307,8 @@ export class ReportsController {
         method: 'DELETE'
       }
     }
+
+    return isOwner ? { ...generalLinks, ...ownerLinks } : generalLinks
   }
 
   // #getCleanFormattedReportObject(report) {
