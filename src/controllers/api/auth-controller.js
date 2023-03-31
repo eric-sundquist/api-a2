@@ -31,28 +31,10 @@ export class AuthController {
       // Create the access token.
       const accessToken = this.generateAccessToken(user)
 
-      // Create refresh token.
-      const token = new Token({
-        userId: user.userId,
-        valid: true
-      })
-      await token.save()
-
-      const refreshTokenPayload = {
-        sub: token.id,
-        user: user.userId
-      }
-      const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET, {
-        algorithm: 'HS256',
-        expiresIn: process.env.REFRESH_TOKEN_LIFE
-      })
-
       res.status(200).json({
         access_token: accessToken,
-        refresh_token: refreshToken,
         _links: {
           self: { href: `${process.env.BASEURL}/auth/login`, method: 'POST' },
-          refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' },
           reports: { href: `${process.env.BASEURL}/reports/`, method: 'GET' }
         }
       })
@@ -91,8 +73,7 @@ export class AuthController {
       res.status(201).json({
         _links: {
           self: { href: `${process.env.BASEURL}/auth/register`, method: 'POST' },
-          login: { href: `${process.env.BASEURL}/login/`, method: 'POST' },
-          refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' }
+          login: { href: `${process.env.BASEURL}/login/`, method: 'POST' }
         }
       })
     } catch (error) {
@@ -108,56 +89,6 @@ export class AuthController {
           400,
           'The request cannot or will not be processed due to something that is perceived to be a client error (for example validation error)'
         )
-        err.cause = error
-      } else {
-        err = createError(500, 'An unexpected condition was encountered.')
-        err.cause = error
-      }
-      next(err)
-    }
-  }
-
-  /**
-   * Refresh access token.
-   *
-   * @param {object} req - Express request object.
-   * @param {object} res - Express response object.
-   * @param {Function} next - Express next middleware function.
-   */
-  async refresh(req, res, next) {
-    try {
-      if (!req.headers.authorization) throw new Error('No authorization header.')
-
-      const [authenticationScheme, token] = req.headers.authorization.split(' ')
-
-      if (authenticationScheme !== 'Bearer') throw new Error('Invalid authentication scheme.')
-
-      const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
-      await Token.validateToken(payload.sub)
-      // Get tokens user
-      const user = await User.findOne({ userId: payload.user })
-      // Generate new accesstoken
-      const accessToken = this.generateAccessToken(user)
-
-      res.status(200).json({
-        access_token: accessToken,
-        refresh_token: token,
-        _links: {
-          self: { href: `${process.env.BASEURL}/auth/login`, method: 'POST' },
-          refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' },
-          reports: { href: `${process.env.BASEURL}/reports/`, method: 'GET' }
-        }
-      })
-    } catch (error) {
-      let err
-      if (
-        error.message === 'Token has been disabled.' ||
-        error.message === 'Invalid authentication scheme.' ||
-        error.name === 'TokenExpiredError' ||
-        error.name === 'JsonWebTokenError' ||
-        error.message === 'No authorization header.'
-      ) {
-        err = createError(401, 'Refresh token invalid or not provided.')
         err.cause = error
       } else {
         err = createError(500, 'An unexpected condition was encountered.')

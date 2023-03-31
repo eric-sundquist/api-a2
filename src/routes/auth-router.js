@@ -19,8 +19,7 @@ router.get('/', (req, res) => {
     _links: {
       self: { href: `${process.env.BASEURL}/auth`, method: 'GET' },
       login: { href: `${process.env.BASEURL}/auth/login`, method: 'POST' },
-      register: { href: `${process.env.BASEURL}/auth/register`, method: 'POST' },
-      refresh: { href: `${process.env.BASEURL}/auth/refresh`, method: 'POST' }
+      register: { href: `${process.env.BASEURL}/auth/register`, method: 'POST' }
     }
   }
   res.json(data)
@@ -31,8 +30,6 @@ router.post('/login', (req, res, next) => controller.login(req, res, next))
 
 // Register
 router.post('/register', (req, res, next) => controller.register(req, res, next))
-
-router.post('/refresh', (req, res, next) => controller.refresh(req, res, next))
 
 // Catch 404.
 router.use('*', (req, res, next) => next(createError(404)))

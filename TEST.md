@@ -92,10 +92,6 @@ Follow these steps for testing the api with the Postman collection. The requests
     "register": {
       "href": "https://api-a2.onrender.com/auth/register",
       "method": "POST"
-    },
-    "refresh": {
-      "href": "https://api-a2.onrender.com/auth/refresh",
-      "method": "POST"
     }
   }
 }
@@ -114,10 +110,6 @@ Follow these steps for testing the api with the Postman collection. The requests
     "login": {
       "href": "https://api-a2.onrender.com/login/",
       "method": "POST"
-    },
-    "refresh": {
-      "href": "https://api-a2.onrender.com/auth/refresh",
-      "method": "POST"
     }
   }
 }
@@ -129,14 +121,9 @@ Follow these steps for testing the api with the Postman collection. The requests
 // Expected response. Example.
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDI3MDM5ZDM2NGE1MjM4NTRiMzdjNjAiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJ1c2VyMSIsImdpdmVuX25hbWUiOiJVc2VyIiwiZmFtaWx5X25hbWUiOiJPbmUiLCJpYXQiOjE2ODAyNzg1NTIsImV4cCI6MTY4MDI4MjA5Mn0.oxSosRMtqaLAr8EC2udHmMCcbFmCqtC41xvhnrD85LbVWMESC4yrEP4yOesFd9s9lfSSC-7Yo4GR3n2PStx4nFNb3GRU-xddPz3LElhd70HqJ52oZ0Vvn0mcwAC6gPT4tNE2LYnsn7xyv_CCqeldYeT1YZErxfFEqXZKxVuysjeh33Fh2vhI_9mwSyeHlhhrCle9gRrrInkZnUx8sUrNlllBhXcZyd0EqrLGc_gRbBslmKwrdmlQcZjeBWT6HEtXxTXoYVNRxvKu35qMLGRtKknPfCFQ3IEZGvQ6_dIQSqreWjKZrg3DH8bSVdc_cKtzWEh8awMWWlP176ncP2SOag",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDI3MDQxODM2NGE1MjM4NTRiMzdjNjMiLCJpYXQiOjE2ODAyNzg1NTIsImV4cCI6MTY4MDUzNzc1Mn0.j-PLjlzgXswNSqRWqmltL9L2ac-5OmChgty4KiOKKNI",
   "_links": {
     "self": {
       "href": "https://api-a2.onrender.com/auth/login",
-      "method": "POST"
-    },
-    "refresh": {
-      "href": "https://api-a2.onrender.com/auth/refresh",
       "method": "POST"
     },
     "reports": {
