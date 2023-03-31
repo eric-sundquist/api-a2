@@ -96,7 +96,6 @@ const checkAuthHeaderAndPopulateReqUser = (req, res, next) => {
  * @param {Function} next - Express next middleware function.
  */
 const authOwner = (req, res, next) => {
-  console.log(req.report)
   if (req.user.id !== req.report.user.toHexString()) {
     const error = createError(
       403,

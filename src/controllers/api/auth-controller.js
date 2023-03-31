@@ -8,7 +8,6 @@
 import jwt from 'jsonwebtoken'
 import createError from 'http-errors'
 import { User } from '../../models/user.js'
-import { Token } from '../../models/token.js'
 import { v4 as uuidv4 } from 'uuid'
 
 const key = Buffer.from(process.env.ACCESS_TOKEN_PRIVATE_KEY_64, 'base64')
@@ -27,7 +26,6 @@ export class AuthController {
   async login(req, res, next) {
     try {
       const user = await User.authenticate(req.body.username, req.body.password)
-      console.log(user)
       // Create the access token.
       const accessToken = this.generateAccessToken(user)
 
