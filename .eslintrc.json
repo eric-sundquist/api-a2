@@ -1,4 +1,7 @@
 {
   "extends": "@lnu",
-  "space-before-function-paren": "never"
+  "rules": {
+    "space-before-function-paren": 0,
+    "no-warning-comments": ["warn", { "terms": ["todo"] }]
+  }
 }

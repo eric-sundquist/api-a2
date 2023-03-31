@@ -84,7 +84,8 @@ const convertOptions = {
    * @param {object} ret - The plain object representation which has been converted.
    */
   transform: (doc, ret) => {
-    delete ret._id, delete ret.password
+    delete ret._id
+    delete ret.password
   }
 }
 

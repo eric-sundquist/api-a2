@@ -91,6 +91,9 @@ router.param('id', (req, res, next, id) => controller.getReport(req, res, next, 
 // GET reports
 router.get('/', (req, res, next) => controller.findAll(req, res, next))
 
+// POST register webhook to subscribe to new reports
+router.post('/webhook', authenticateJWT, (req, res, next) => controller.registerWebhook(req, res, next))
+
 // GET reports/:id
 router.get('/:id', authenticateJWT, (req, res, next) => controller.findReport(req, res, next))
 

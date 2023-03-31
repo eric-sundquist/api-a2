@@ -7,6 +7,7 @@
 
 import createError from 'http-errors'
 import { Report } from '../../models/report.js'
+import { Webhook } from '../../models/webhook.js'
 
 /**
  * Encapsulates a controller.
@@ -109,6 +110,7 @@ export class ReportsController {
       await report.populate('user')
 
       const repObj = report.toObject()
+      this.#triggerWebhook(req, res, next, repObj)
       repObj._links = this.#createReportHateoasLinks(report)
 
       res.status(201).json(repObj)
@@ -144,6 +146,7 @@ export class ReportsController {
           runValidators: true
         }
       )
+      // TODO: Send links??
 
       res.status(204).end()
     } catch (error) {
@@ -177,6 +180,8 @@ export class ReportsController {
       if ('dateOfCatch' in req.body) partialReport.dateOfCatch = req.body.dateOfCatch
 
       await Report.findByIdAndUpdate(req.params.id, partialReport, { new: true })
+      // TODO Send links??
+
       res.status(204).end()
     } catch (error) {
       const err = createError(
@@ -200,6 +205,7 @@ export class ReportsController {
   async deleteReport(req, res, next) {
     try {
       await req.report.deleteOne()
+      // TODO: Send links??
 
       res.status(204).end()
     } catch (error) {
@@ -207,6 +213,85 @@ export class ReportsController {
     }
   }
 
+  /**
+   * Register new webhook subscriber.
+   *
+   * @param {object} req - Express request object.
+   * @param {object} res - Express response object.
+   * @param {Function} next - Express next middleware function.
+   */
+  async registerWebhook(req, res, next) {
+    try {
+      const webhook = new Webhook({ url: req.body.url, userId: req.user.id })
+      await webhook.save()
+      // TODO: Send links??
+      res.status(201).json(webhook)
+    } catch (error) {
+      const err = createError(
+        error.name === 'ValidationError'
+          ? 400 // bad format
+          : 500 // something went really wrong
+      )
+      err.cause = error
+      next(err)
+    }
+  }
+
+  /**
+   * Triggers webhook and notifies subscribers.
+   *
+   * @param {object} req - Express request object.
+   * @param {object} res - Express response object.
+   * @param {Function} next - Express next middleware function.
+   * @param {Function} report - data to send to subscribers.
+   */
+  async #triggerWebhook(req, res, next, report) {
+    try {
+      const webhooks = await Webhook.find()
+      webhooks.forEach((webhook) => {
+        // add relevant links to data.
+
+        // if user is owner
+        if (report.user.id === webhook.userId) {
+          // Add links for owner like UPDATE, DELETE etc.
+          report._links = this.#createReportHateoasLinks(report)
+        } else {
+          // Add links for non owner
+          report._links = {
+            self: {
+              href: `${process.env.BASEURL}/reports/${report.id}`,
+              method: 'GET'
+            },
+            all: {
+              href: `${process.env.BASEURL}/reports`,
+              method: 'GET'
+            },
+            create: {
+              href: `${process.env.BASEURL}/reports`,
+              method: 'POST'
+            }
+          }
+        }
+
+        fetch(webhook.url, {
+          method: 'POST',
+          body: JSON.stringify(report),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  /**
+   * Returns js object with hateoas links.
+   *
+   * @param {object} report - report object
+   * @returns {object} hateoas links
+   */
   #createReportHateoasLinks(report) {
     const baseUrl = process.env.BASEURL
     return {
