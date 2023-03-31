@@ -226,8 +226,22 @@ export class ReportsController {
     try {
       const webhook = new Webhook({ url: req.body.url, userId: req.user.id })
       await webhook.save()
-      // TODO: Send links??
-      res.status(201).json(webhook)
+      const withLinks = webhook.toObject()
+      withLinks._link = {
+        self: {
+          href: `${process.env.BASEURL}/reports/webhook`,
+          method: 'GET'
+        },
+        all: {
+          href: `${process.env.BASEURL}}/reports`,
+          method: 'GET'
+        },
+        create: {
+          href: `${process.env.BASEURL}}/reports`,
+          method: 'POST'
+        }
+      }
+      res.status(201).json(withLinks)
     } catch (error) {
       const err = createError(
         error.name === 'ValidationError'

@@ -38,11 +38,11 @@ try {
       if (err.status === 409) {
         return res.status(err.status).send()
       } else {
-        if (err.status === 500)
-          err.message = 'An unexpected condition was encountered.'
-        if (err.status === 400)
+        if (err.status === 500) err.message = 'An unexpected condition was encountered.'
+        if (err.status === 400) {
           err.message =
             'The request cannot or will not be processed due to something that is perceived to be a client error (for example, validation error).'
+        }
         return res.status(err.status).json({
           status: err.status,
           message: err.message
