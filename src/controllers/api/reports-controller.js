@@ -82,20 +82,25 @@ export class ReportsController {
         reportWithLinks._links = this.#createReportHateoasLinks(report, report.user?.id === req.user?.id, !!req.user)
         reportsWithLinks.push(reportWithLinks)
       }
-      const resData = {
+
+      const anonLinks = {
         reports: reportsWithLinks,
         _links: {
           self: {
             href: `${process.env.BASEURL}/reports`,
             method: 'GET'
-          },
-          subscribeWebhookUpdatesAllNewReports: {
-            href: `${process.env.BASEURL}/reports/webhooks`,
-            method: 'POST'
           }
         }
       }
-      res.json(resData)
+
+      const subHookLink = {
+        subscribeWebhookUpdatesAllNewReports: {
+          href: `${process.env.BASEURL}/reports/webhooks`,
+          method: 'POST'
+        }
+      }
+
+      req.user ? res.json({ ...anonLinks, ...subHookLink }) : res.json(anonLinks)
     } catch (error) {
       next(error)
     }
