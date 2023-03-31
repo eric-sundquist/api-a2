@@ -52,7 +52,7 @@ export class ReportsController {
   async findReport(req, res, next) {
     const rep = await req.report.populate('user')
     const repObj = rep.toObject()
-    repObj._links = this.#createReportHateoasLinks(rep, req.user.id === rep.user.id)
+    repObj._links = this.#createReportHateoasLinks(rep, req.user.id === rep.user.id, !!req.user)
     res.json(repObj)
   }
 
@@ -65,19 +65,24 @@ export class ReportsController {
    */
   async findAll(req, res, next) {
     try {
-      const reports = await Report.find().populate('user')
-      const resolvedReports = []
+      const reportsWithLinks = []
+      let reports
+      if (req.user) {
+        reports = await Report.find().populate('user')
+      } else {
+        reports = await Report.find()
+      }
 
       for (const report of reports) {
         const reportWithLinks = report.toObject()
 
-        // Add HATEOAS links to the report
-        reportWithLinks._links = this.#createReportHateoasLinks(report, req.user.id === report.user.id)
+        // If anonomous user remove user data from report
+        if (!req.user) delete reportWithLinks.user
 
-        resolvedReports.push(reportWithLinks)
+        reportWithLinks._links = this.#createReportHateoasLinks(report, report.user?.id === req.user?.id, !!req.user)
+        reportsWithLinks.push(reportWithLinks)
       }
-
-      res.json(resolvedReports)
+      res.json(reportsWithLinks)
     } catch (error) {
       next(error)
     }
@@ -111,7 +116,7 @@ export class ReportsController {
 
       const repObj = report.toObject()
       this.#triggerWebhook(req, res, next, repObj)
-      repObj._links = this.#createReportHateoasLinks(report, true)
+      repObj._links = this.#createReportHateoasLinks(report, true, !!req.user)
 
       res.status(201).json(repObj)
     } catch (error) {
@@ -146,7 +151,6 @@ export class ReportsController {
           runValidators: true
         }
       )
-      // TODO: Send links??
 
       res.status(204).end()
     } catch (error) {
@@ -180,7 +184,6 @@ export class ReportsController {
       if ('dateOfCatch' in req.body) partialReport.dateOfCatch = req.body.dateOfCatch
 
       await Report.findByIdAndUpdate(req.params.id, partialReport, { new: true })
-      // TODO Send links??
 
       res.status(204).end()
     } catch (error) {
@@ -205,7 +208,6 @@ export class ReportsController {
   async deleteReport(req, res, next) {
     try {
       await req.report.deleteOne()
-      // TODO: Send links??
 
       res.status(204).end()
     } catch (error) {
@@ -250,7 +252,7 @@ export class ReportsController {
       const webhooks = await Webhook.find()
       webhooks.forEach((webhook) => {
         // add relevant links to data.
-        report._links = this.#createReportHateoasLinks(report, report.user.id === webhook.userId)
+        report._links = this.#createReportHateoasLinks(report, report.user.id === webhook.userId, !!req.user)
 
         fetch(webhook.url, {
           method: 'POST',
@@ -270,9 +272,10 @@ export class ReportsController {
    *
    * @param {object} report - report object
    * @param {boolean} isOwner - true if links for owner be displayed
+   * @param {boolean} isAuth - true if links for authenticated user is to be displayed
    * @returns {object} hateoas links
    */
-  #createReportHateoasLinks(report, isOwner) {
+  #createReportHateoasLinks(report, isOwner, isAuth) {
     const baseUrl = process.env.BASEURL
     const generalLinks = {
       self: {
@@ -282,7 +285,10 @@ export class ReportsController {
       all: {
         href: `${baseUrl}/reports`,
         method: 'GET'
-      },
+      }
+    }
+
+    const authLinks = {
       create: {
         href: `${baseUrl}/reports`,
         method: 'POST'
@@ -308,37 +314,12 @@ export class ReportsController {
       }
     }
 
-    return isOwner ? { ...generalLinks, ...ownerLinks } : generalLinks
+    if (isOwner) {
+      return { ...generalLinks, ...authLinks, ...ownerLinks }
+    } else if (isAuth) {
+      return { ...generalLinks, ...authLinks }
+    } else {
+      return generalLinks
+    }
   }
-
-  // #getCleanFormattedReportObject(report) {
-  //   console.log(report)
-  //   const {
-  //     user: { username, firstName, lastName },
-  //     position,
-  //     locationName,
-  //     city,
-  //     fishSpecies,
-  //     weight,
-  //     length,
-  //     imageUrl,
-  //     dateOfCatch,
-  //     id
-  //   } = report
-
-  //   return {
-  //     username,
-  //     firstName,
-  //     lastName,
-  //     position,
-  //     locationName,
-  //     city,
-  //     fishSpecies,
-  //     weight,
-  //     length,
-  //     imageUrl,
-  //     dateOfCatch,
-  //     id
-  //   }
-  // }
 }

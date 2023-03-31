@@ -33,19 +33,7 @@ const controller = new ReportsController()
  */
 const authenticateJWT = (req, res, next) => {
   try {
-    const [authenticationScheme, token] = req.headers.authorization?.split(' ')
-
-    if (authenticationScheme !== 'Bearer') {
-      throw new Error('Invalid authentication scheme.')
-    }
-
-    const payload = jwt.verify(token, publicKey)
-    req.user = {
-      username: payload.preferred_username,
-      firstName: payload.given_name,
-      lastName: payload.family_name,
-      id: payload.sub
-    }
+    checkAuthHeaderAndPopulateReqUser(req, res, next)
     next()
   } catch (err) {
     let error
@@ -56,6 +44,45 @@ const authenticateJWT = (req, res, next) => {
     }
     error.cause = err
     next(error)
+  }
+}
+/**
+ * If authentication is successful, `req.user`is else does nothing.
+ *
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @param {Function} next - Express next middleware function.
+ */
+const populateReqUserIfAuthElseNothing = (req, res, next) => {
+  try {
+    checkAuthHeaderAndPopulateReqUser(req, res, next)
+    next()
+  } catch (err) {
+    // If not successfully authenticated, req.user is not provided.
+    next()
+  }
+}
+
+/**
+ * Authenticate user and populate `req.user`.
+ *
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @param {Function} next - Express next middleware function.
+ */
+const checkAuthHeaderAndPopulateReqUser = (req, res, next) => {
+  const [authenticationScheme, token] = req.headers.authorization?.split(' ')
+
+  if (authenticationScheme !== 'Bearer') {
+    throw new Error('Invalid authentication scheme.')
+  }
+
+  const payload = jwt.verify(token, publicKey)
+  req.user = {
+    username: payload.preferred_username,
+    firstName: payload.given_name,
+    lastName: payload.family_name,
+    id: payload.sub
   }
 }
 
@@ -89,7 +116,7 @@ const authOwner = (req, res, next) => {
 router.param('id', (req, res, next, id) => controller.getReport(req, res, next, id))
 
 // GET reports
-router.get('/', (req, res, next) => controller.findAll(req, res, next))
+router.get('/', populateReqUserIfAuthElseNothing, (req, res, next) => controller.findAll(req, res, next))
 
 // POST register webhook to subscribe to new reports
 router.post('/webhook', authenticateJWT, (req, res, next) => controller.registerWebhook(req, res, next))
